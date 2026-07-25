@@ -6,7 +6,7 @@ export function Landing() {
   const { user } = useAuth();
 
   return (
-    <div className="w-full min-h-screen bg-[#0f172a] text-slate-100 flex flex-col font-sans relative overflow-x-hidden">
+    <div className="w-full min-h-screen bg-[#0f172a] text-slate-100 flex flex-col font-sans relative overflow-x-hidden scroll-page">
       {/* Mesh Gradient Background Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-600/10 blur-[150px] rounded-full pointer-events-none"></div>
