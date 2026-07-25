@@ -87,7 +87,7 @@ export function Settings() {
             <h3 className="text-2xl font-bold text-[#1d2421]">Profile Details</h3>
             <p className="text-[#777670] text-sm mt-1 mb-5">Kelola informasi publik dan detail kontak Anda.</p>
             {loading ? (
-              <div className="space-y-3 animate-pulse"><div className="h-12 bg-[#f4f2ed] rounded-xl" /><div className="h-12 bg-[#f4f2ed] rounded-xl" /></div>
+              <div className="space-y-3 animate-pulse"><div className="h-12 bg-[#eaf4f0] rounded-xl" /><div className="h-12 bg-[#f4f2ed] rounded-xl" /></div>
             ) : (
               <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                 <div><label className="block text-xs font-medium text-[#5f5e5a] mb-1.5">Full Name</label><input type="text" required minLength={2} maxLength={60} value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Masukkan nama lengkapmu" className="w-full rounded-xl border border-[#dedbd4] bg-white text-[#252b28] focus:outline-none focus:border-[#0f6e56] focus:ring-1 focus:ring-[#0f6e56]/20 text-sm p-3" /></div>

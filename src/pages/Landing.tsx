@@ -48,7 +48,7 @@ export function Landing() {
           FinLit bukan sekadar aplikasi pencatat keuangan. Ini adalah asisten finansial pribadimu yang memberikan insight cerdas berdasarkan pengeluaran aslimu.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
-          <Link to={user ? "/app" : "/register"} className="px-8 py-4 bg-[#0f6e56] hover:bg-[#075b46] rounded-xl text-base font-bold text-white shadow-sm transition-colors flex items-center justify-center gap-2">
+          <Link to={user ? "/app" : "/login"} className="px-8 py-4 bg-[#0f6e56] hover:bg-[#075b46] rounded-xl text-base font-bold text-white shadow-sm transition-colors flex items-center justify-center gap-2">
             Mulai Sekarang <Zap className="w-4 h-4" />
           </Link>
           <a href="#tentang" className="px-8 py-4 bg-white hover:bg-[#f0eee8] border border-[#d9d6cf] rounded-xl text-base font-bold text-[#0f6e56] transition-colors">
@@ -148,7 +148,7 @@ export function Landing() {
             <p className="text-lg text-[#d7efe7] max-w-3xl mx-auto leading-relaxed relative z-10 mb-10">
               "Membangun generasi muda Indonesia yang melek finansial, bebas dari masalah keuangan impulsif, dan mampu merencanakan masa depan dengan tenang dan percaya diri."
             </p>
-            <Link to={user ? "/app" : "/register"} className="inline-flex px-8 py-4 bg-white text-[#0f6e56] rounded-xl text-base font-bold shadow-xl hover:bg-[#f4f2ed] transition-colors relative z-10">
+            <Link to={user ? "/app" : "/login"} className="inline-flex px-8 py-4 bg-white text-[#0f6e56] rounded-xl text-base font-bold shadow-xl hover:bg-[#f4f2ed] transition-colors relative z-10">
               Mulai Perjalanan Finansialmu
             </Link>
           </section>

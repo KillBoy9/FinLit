@@ -4,34 +4,51 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { Wallet } from 'lucide-react';
+import { ArrowLeft, Wallet } from 'lucide-react';
 
 export function Register() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate('/');
+  };
+
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError('');
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: 'select_account',
+        client_id: '206410490366-4n8iov2av33v4uuj7a9dbm3d79ccs99m.apps.googleusercontent.com',
+      });
       const result = await signInWithPopup(auth, provider);
       
-      // Check if user exists in db, if not create profile
       const userRef = doc(db, 'profiles', result.user.uid);
       const userSnap = await getDoc(userRef);
-      
       if (!userSnap.exists()) {
         await setDoc(userRef, {
           fullName: result.user.displayName || 'User',
           createdAt: new Date().toISOString()
         });
       }
-      
       navigate('/app');
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Google');
+      // User closed the popup — bukan error, abaikan saja
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        setLoading(false);
+        return;
+      }
+      const errorMessages: Record<string, string> = {
+        'auth/popup-blocked': 'Popup diblokir browser. Izinkan popup untuk situs ini lalu coba lagi.',
+        'auth/unauthorized-domain': 'Domain tidak diizinkan. Tambahkan localhost di Firebase Console → Authentication → Authorized domains.',
+        'auth/network-request-failed': 'Koneksi gagal. Periksa koneksi internetmu.',
+        'auth/too-many-requests': 'Terlalu banyak percobaan. Coba lagi beberapa saat.',
+      };
+      setError(errorMessages[err.code] || 'Gagal daftar dengan Google. Coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -68,6 +85,10 @@ export function Register() {
     <div className="w-full min-h-screen bg-[#f8f7f4] text-[#1d2421] flex items-center justify-center overflow-y-auto font-sans relative py-8">
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#dff3ed] blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#fff0e9] blur-[150px] rounded-full pointer-events-none" />
+
+      <button onClick={handleBack} className="absolute top-6 left-6 z-10 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-[#0f6e56] hover:bg-[#e2f4ef] transition-colors">
+        <ArrowLeft className="w-4 h-4" /> Kembali
+      </button>
 
       <div className="w-full max-w-md p-8 bg-white border border-[#e4e1da] rounded-3xl shadow-xl shadow-[#0f6e56]/5 relative z-10 m-4">
         <div className="text-center mb-10">

@@ -26,12 +26,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // This prevents flash of unauthenticated content AND the infinite skeleton loop
   if (loading) {
     return (
-      <div className="h-screen w-full bg-[#0f172a] flex items-center justify-center">
+      <div className="h-screen w-full bg-[#f8f7f4] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center">
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          <div className="w-12 h-12 rounded-2xl bg-[#0f6e56] flex items-center justify-center shadow-sm">
+            <div className="w-6 h-6 border-2 border-white/35 border-t-white rounded-full animate-spin" />
           </div>
-          <p className="text-slate-500 text-sm">Memuat...</p>
+          <div className="text-center"><p className="text-[#0f6e56] text-sm font-semibold">Menyiapkan FinGuide AI</p><p className="text-[#777670] text-xs mt-1">Memuat akun dan data keuanganmu...</p></div>
         </div>
       </div>
     );

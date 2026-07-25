@@ -16,9 +16,9 @@ const CHART_COLORS = ['#0F6E56', '#D85A30', '#954C41', '#5F5E5A', '#71A995', '#E
 function SkeletonCard() {
   return (
     <div className="bg-white p-5 rounded-2xl border border-[#e4e1da] animate-pulse shadow-sm">
-      <div className="h-3 w-24 bg-[#eceae4] rounded mb-3" />
+      <div className="h-3 w-24 bg-[#dff0ea] rounded mb-3" />
       <div className="h-7 w-36 bg-[#eceae4] rounded mb-3" />
-      <div className="h-2 w-full bg-[#f2f0eb] rounded-full" />
+      <div className="h-2 w-full bg-[#e7f1ed] rounded-full" />
     </div>
   );
 }

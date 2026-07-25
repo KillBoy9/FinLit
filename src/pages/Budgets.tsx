@@ -196,7 +196,7 @@ export function Budgets() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-[#e4e1da] p-5 animate-pulse h-64" />
+            <div key={i} className="bg-[#fbfdfc] rounded-2xl border border-[#d8e9e2] p-5 animate-pulse h-64" />
           ))}
         </div>
       ) : budgetProgress.length === 0 ? (
