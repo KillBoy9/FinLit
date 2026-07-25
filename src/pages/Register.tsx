@@ -65,69 +65,52 @@ export function Register() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#0f172a] text-slate-100 flex items-center justify-center overflow-y-auto font-sans relative py-8">
-      {/* Mesh Gradient Background Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-600/10 blur-[150px] rounded-full pointer-events-none"></div>
+    <div className="w-full min-h-screen bg-[#f8f7f4] text-[#1d2421] flex items-center justify-center overflow-y-auto font-sans relative py-8">
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#dff3ed] blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#fff0e9] blur-[150px] rounded-full pointer-events-none" />
 
-      <div className="w-full max-w-md p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl relative z-10 m-4">
+      <div className="w-full max-w-md p-8 bg-white border border-[#e4e1da] rounded-3xl shadow-xl shadow-[#0f6e56]/5 relative z-10 m-4">
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 mx-auto mb-6 transform -rotate-6">
+          <div className="w-16 h-16 bg-[#0f6e56] rounded-2xl flex items-center justify-center shadow-sm mx-auto mb-5">
             <Wallet className="h-8 w-8 text-white" />
           </div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">Create your account</h2>
+          <h2 className="text-3xl font-bold text-[#0f6e56] tracking-tight">FinGuide AI</h2>
+          <p className="text-[10px] font-bold tracking-[0.16em] text-[#5f5e5a] mt-1">WEALTH MANAGEMENT</p>
+          <p className="text-[#777670] mt-4">Buat akun untuk mulai mengatur finansialmu.</p>
         </div>
         
         <div className="space-y-6">
-          {error && <div className="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl text-center">{error}</div>}
+          {error && <div className="text-sm text-[#954c41] bg-[#f5e6e2] border border-[#d9aaa2] p-4 rounded-xl text-center">{error}</div>}
           
-          <button 
-            type="button" 
-            onClick={handleGoogleSignIn}
-            disabled={loading} 
-            className="w-full flex justify-center py-3 px-4 border border-white/10 rounded-xl shadow-lg bg-white text-slate-900 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 disabled:opacity-50 transition-all font-bold"
-          >
-            Sign in with Google
-          </button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-[#0f172a] text-slate-400">Atau gunakan email (perlu diaktifkan)</span>
-            </div>
-          </div>
-
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
+              <label className="block text-xs font-semibold text-[#5f5e5a] uppercase tracking-wider mb-2">Nama lengkap</label>
               <input 
                 name="fullName" 
                 type="text" 
                 required 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-colors" 
-                placeholder="John Doe"
+                className="w-full bg-white border border-[#dedbd4] rounded-xl px-4 py-3 text-[#252b28] placeholder-[#aaa8a2] focus:outline-none focus:border-[#0f6e56] focus:ring-1 focus:ring-[#0f6e56]/20 transition-colors"
+                placeholder="Nama kamu"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email address</label>
+              <label className="block text-xs font-semibold text-[#5f5e5a] uppercase tracking-wider mb-2">Email address</label>
               <input 
                 name="email" 
                 type="email" 
                 required 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-colors" 
+                className="w-full bg-white border border-[#dedbd4] rounded-xl px-4 py-3 text-[#252b28] placeholder-[#aaa8a2] focus:outline-none focus:border-[#0f6e56] focus:ring-1 focus:ring-[#0f6e56]/20 transition-colors"
                 placeholder="you@example.com"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password</label>
+              <label className="block text-xs font-semibold text-[#5f5e5a] uppercase tracking-wider mb-2">Password</label>
               <input 
                 name="password" 
                 type="password" 
                 required 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-colors" 
+                className="w-full bg-white border border-[#dedbd4] rounded-xl px-4 py-3 text-[#252b28] placeholder-[#aaa8a2] focus:outline-none focus:border-[#0f6e56] focus:ring-1 focus:ring-[#0f6e56]/20 transition-colors"
                 placeholder="••••••••"
               />
             </div>
@@ -137,15 +120,19 @@ export function Register() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="w-full flex justify-center py-3 px-4 border border-indigo-500/50 rounded-xl shadow-lg shadow-indigo-500/20 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all"
+              className="w-full flex justify-center py-3 px-4 rounded-xl shadow-sm text-sm font-bold text-white bg-[#0f6e56] hover:bg-[#075b46] focus:outline-none focus:ring-2 focus:ring-[#0f6e56]/20 disabled:opacity-50 transition-all"
             >
-              {loading ? 'Creating account...' : 'Register'}
+              {loading ? 'Membuat akun...' : 'Daftar'}
             </button>
           </div>
         </form>
+        <div className="relative"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#e4e1da]" /></div><div className="relative flex justify-center text-sm"><span className="px-3 bg-white text-[#777670]">atau daftar dengan</span></div></div>
+        <button type="button" onClick={handleGoogleSignIn} disabled={loading} aria-label="Daftar dengan Google" title="Daftar dengan Google" className="w-12 h-12 mx-auto flex items-center justify-center border border-[#dedbd4] rounded-xl bg-white hover:bg-[#f7f6f2] hover:border-[#acd3c7] focus:outline-none focus:ring-2 focus:ring-[#0f6e56]/20 disabled:opacity-50 transition-all shadow-sm">
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5"><path fill="#4285F4" d="M21.35 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.94 2.94v2.51h3.14c1.84-1.7 2.91-4.2 2.91-7.28Z" /><path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.35L15.3 16.9c-.87.58-1.98.92-3.3.92-2.54 0-4.7-1.72-5.48-4.03H3.27v2.59A9.75 9.75 0 0 0 12 21.75Z" /><path fill="#FBBC05" d="M6.52 13.79A5.85 5.85 0 0 1 6.21 12c0-.62.11-1.21.31-1.79V7.62H3.27A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.05 1.02 4.38l3.25-2.59Z" /><path fill="#EA4335" d="M12 6.18c1.43 0 2.7.49 3.71 1.45l2.78-2.78C16.84 3.3 14.63 2.25 12 2.25a9.75 9.75 0 0 0-8.73 5.37l3.25 2.59C7.3 7.9 9.46 6.18 12 6.18Z" /></svg>
+        </button>
         </div>
         <div className="text-center mt-6">
-          <Link to="/login" className="text-sm text-slate-400 hover:text-white transition-colors">Already have an account? <span className="text-indigo-400 font-medium">Sign in</span></Link>
+          <Link to="/login" className="text-sm text-[#777670] hover:text-[#0f6e56] transition-colors">Sudah punya akun? <span className="text-[#0f6e56] font-bold">Masuk</span></Link>
         </div>
       </div>
     </div>
