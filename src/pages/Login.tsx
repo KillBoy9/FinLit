@@ -1,14 +1,41 @@
 import React from "react";
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth, db } from '../lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Wallet } from 'lucide-react';
 
 export function Login() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      // Check if user exists in db, if not create profile
+      const userRef = doc(db, 'profiles', result.user.uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          fullName: result.user.displayName || 'User',
+          createdAt: new Date().toISOString()
+        });
+      }
+      
+      navigate('/app');
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in with Google');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,10 +71,29 @@ export function Login() {
           <p className="text-slate-400 mt-2">Sign in to manage your finances</p>
         </div>
         
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="space-y-6">
           {error && <div className="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl text-center">{error}</div>}
           
-          <div className="space-y-4">
+          <button 
+            type="button" 
+            onClick={handleGoogleSignIn}
+            disabled={loading} 
+            className="w-full flex justify-center py-3 px-4 border border-white/10 rounded-xl shadow-lg bg-white text-slate-900 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 disabled:opacity-50 transition-all font-bold"
+          >
+            Sign in with Google
+          </button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-[#0f172a] text-slate-400">Atau gunakan email (perlu diaktifkan)</span>
+            </div>
+          </div>
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email address</label>
               <input 
@@ -80,6 +126,7 @@ export function Login() {
             </button>
           </div>
         </form>
+        </div>
         <div className="text-center mt-6">
           <Link to="/register" className="text-sm text-slate-400 hover:text-white transition-colors">Don't have an account? <span className="text-indigo-400 font-medium">Register</span></Link>
         </div>

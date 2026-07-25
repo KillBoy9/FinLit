@@ -24,21 +24,17 @@ export function useCategories() {
 
     const q = query(
       collection(db, 'categories'),
-      or(
-        where('isGlobal', '==', true),
-        where('userId', '==', user.uid)
-      )
+      where('userId', '==', user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
-        setCategories(defaultCategories);
-      } else {
-        const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
-        // Merge with defaults if global ones aren't in DB yet to ensure UI works immediately
-        const combined = [...defaultCategories, ...fetched.filter(f => f.userId === user.uid)];
-        setCategories(combined);
-      }
+      const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+      const combined = [...defaultCategories, ...fetched];
+      setCategories(combined);
+      setLoading(false);
+    }, (error) => {
+      console.error("Categories fetch error:", error);
+      setCategories(defaultCategories);
       setLoading(false);
     });
 

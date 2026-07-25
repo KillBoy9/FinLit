@@ -19,7 +19,7 @@ async function startServer() {
       const systemInstruction = `Kamu adalah asisten literasi finansial untuk anak muda Indonesia. Berdasarkan data pengguna berikut: ${JSON.stringify(context)}, berikan analisis singkat dan actionable dalam Bahasa Indonesia yang santai tapi jelas. Rujuk selalu ke angka spesifik dari data pengguna, jangan berikan saran generik. Kamu boleh memberi kritik gaya hidup jika relevan, rekomendasi alokasi anggaran gaya 50/30/20, dan jawaban literasi finansial yang kontekstual untuk kondisi ekonomi anak muda Indonesia.`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.6-flash',
         contents: prompt,
         config: {
           systemInstruction,
