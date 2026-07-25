@@ -1,0 +1,43 @@
+{
+  "collections": [
+    {
+      "name": "profiles",
+      "fields": [
+        { "name": "fullName", "type": "string" },
+        { "name": "createdAt", "type": "timestamp" }
+      ]
+    },
+    {
+      "name": "categories",
+      "fields": [
+        { "name": "name", "type": "string" },
+        { "name": "type", "type": "string" },
+        { "name": "userId", "type": "string" },
+        { "name": "isGlobal", "type": "boolean" },
+        { "name": "icon", "type": "string" }
+      ]
+    },
+    {
+      "name": "transactions",
+      "fields": [
+        { "name": "userId", "type": "string" },
+        { "name": "amount", "type": "number" },
+        { "name": "type", "type": "string" },
+        { "name": "categoryId", "type": "string" },
+        { "name": "date", "type": "timestamp" },
+        { "name": "note", "type": "string" },
+        { "name": "createdAt", "type": "timestamp" }
+      ]
+    },
+    {
+      "name": "budgets",
+      "fields": [
+        { "name": "userId", "type": "string" },
+        { "name": "categoryId", "type": "string" },
+        { "name": "amount", "type": "number" },
+        { "name": "month", "type": "string" },
+        { "name": "createdAt", "type": "timestamp" }
+      ]
+    }
+  ]
+}
