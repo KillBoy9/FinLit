@@ -13,6 +13,8 @@ import { Transaction } from '../types';
 import { cn } from '../lib/utils';
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
+const sanitizeAmount = (value: string) => value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+const formatAmountInput = (value: string) => sanitizeAmount(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
 // ── Edit row inline ─────────────────────────────────────────────
 interface EditState {
@@ -83,7 +85,7 @@ function EditRow({
           className="w-full rounded-lg border border-[#dedbd4] bg-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#0f6e56]" />
       </td>
       <td className="px-3 py-2">
-        <input type="number" min="1" step="1" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+        <input type="text" inputMode="numeric" pattern="[0-9.]*" value={formatAmountInput(form.amount)} onChange={e => setForm(f => ({ ...f, amount: sanitizeAmount(e.target.value) }))}
           className="w-full rounded-lg border border-[#dedbd4] bg-white text-xs px-2 py-1.5 text-right focus:outline-none focus:border-[#0f6e56]" />
       </td>
       <td className="px-3 py-2">
@@ -270,8 +272,11 @@ export function Transactions({ searchQuery = '' }: { searchQuery?: string }) {
             </div>
             <div className="col-span-1">
               <label className="block text-xs font-medium text-[#5f5e5a] mb-1.5">Jumlah (Rp)</label>
-              <input type="number" required min="1" step="1" value={amount} onChange={e => setAmount(e.target.value)} placeholder="50000"
-                className="w-full rounded-xl border border-[#dedbd4] bg-[#f7f6f2] text-[#252b28] text-sm p-2.5 placeholder-[#aaa8a2] focus:outline-none focus:border-[#0f6e56]" />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#777670] pointer-events-none">Rp</span>
+                <input type="text" inputMode="numeric" pattern="[0-9.]*" required value={formatAmountInput(amount)} onChange={e => setAmount(sanitizeAmount(e.target.value))} placeholder="50.000"
+                  className="w-full rounded-xl border border-[#dedbd4] bg-[#f7f6f2] text-[#252b28] text-sm p-2.5 pl-10 placeholder-[#aaa8a2] focus:outline-none focus:border-[#0f6e56]" />
+              </div>
             </div>
             <div className="col-span-1">
               <label className="block text-xs font-medium text-[#5f5e5a] mb-1.5">Kategori</label>

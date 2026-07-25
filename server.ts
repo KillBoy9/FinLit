@@ -53,9 +53,8 @@ async function startServer() {
 
   // ── AI Chat endpoint ────────────────────────────────────
   app.post('/api/chat', async (req, res) => {
-    const { prompt, context } = req.body ?? {};
+    const { prompt, context, history } = req.body ?? {};
 
-    // Input validation
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
       return res.status(400).json({ error: 'Prompt tidak boleh kosong.' });
     }
@@ -69,23 +68,55 @@ async function startServer() {
     }
 
     try {
-      const systemInstruction = `Kamu adalah asisten literasi finansial untuk anak muda Indonesia bernama "FinLit AI".
+      // Build context summary as part of the user prompt so Gemini reads it reliably
+      const hasData = context && (context.totalTransaksi > 0 || context.totalPemasukan > 0);
+      const contextBlock = hasData
+        ? `\n\n[DATA KEUANGAN SAYA BULAN ${context.bulan ?? ''}]\n` +
+          `• Total Pemasukan : Rp ${(context.totalPemasukan ?? 0).toLocaleString('id-ID')}\n` +
+          `• Total Pengeluaran: Rp ${(context.totalPengeluaran ?? 0).toLocaleString('id-ID')}\n` +
+          `• Saldo           : Rp ${(context.saldo ?? 0).toLocaleString('id-ID')}\n` +
+          `• Total Transaksi : ${context.totalTransaksi ?? 0} transaksi\n` +
+          (context.top5Pengeluaran?.length
+            ? `• Top Pengeluaran :\n${context.top5Pengeluaran.map((e: any) => `  - ${e.kategori}: Rp ${e.jumlah.toLocaleString('id-ID')}`).join('\n')}\n`
+            : '') +
+          (context.riwayat3Bulan?.length
+            ? `• Riwayat 3 Bulan:\n${context.riwayat3Bulan.map((r: any) => `  - ${r.bulan}: masuk Rp ${r.income?.toLocaleString('id-ID') ?? 0}, keluar Rp ${r.expense?.toLocaleString('id-ID') ?? 0}`).join('\n')}\n`
+            : '')
+        : '\n\n[DATA KEUANGAN: Belum ada transaksi bulan ini]\n';
 
-Data keuangan pengguna bulan ini:
-${JSON.stringify(context ?? {}, null, 2)}
+      const enrichedPrompt = prompt.trim() + contextBlock;
 
-Instruksi:
-- Berikan analisis singkat dan actionable dalam Bahasa Indonesia yang santai tapi jelas.
-- Selalu rujuk ke angka spesifik dari data pengguna (jangan generik).
-- Jika data kosong atau tidak ada transaksi, minta pengguna menambahkan transaksi terlebih dahulu.
-- Boleh memberi kritik konstruktif dan rekomendasi alokasi anggaran gaya 50/30/20.
-- Gunakan emoji secukupnya agar lebih ramah.
-- Jawaban maksimal 300 kata.`;
+      // Build conversation history for multi-turn chat
+      const contents: { role: string; parts: { text: string }[] }[] = [];
+      if (Array.isArray(history)) {
+        for (const msg of history) {
+          if (msg.role === 'user' || msg.role === 'model') {
+            contents.push({ role: msg.role, parts: [{ text: msg.text }] });
+          }
+        }
+      }
+      // Add current user message with context
+      contents.push({ role: 'user', parts: [{ text: enrichedPrompt }] });
+
+      const systemInstruction = `Kamu adalah asisten literasi finansial bernama "FinLit AI" untuk anak muda Indonesia.
+
+Panduan menjawab:
+- Selalu gunakan data keuangan yang ada di pesan user (ditandai [DATA KEUANGAN...]).
+- Sebut angka spesifik dari data — JANGAN beri saran generik tanpa angka.
+- Jika data kosong, minta user tambah transaksi dulu.
+- Gunakan Bahasa Indonesia santai tapi jelas.
+- Boleh beri kritik konstruktif dan saran alokasi 50/30/20.
+- Gunakan emoji secukupnya.
+- Jawaban maksimal 400 kata, jangan dipotong di tengah.`;
 
       const response = await getAI().models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt.trim(),
-        config: { systemInstruction, temperature: 0.7, maxOutputTokens: 600 },
+        contents,
+        config: {
+          systemInstruction,
+          temperature: 0.7,
+          maxOutputTokens: 1024,
+        },
       });
 
       const text = response.text;
@@ -96,8 +127,8 @@ Instruksi:
       const msg: string = error?.message ?? String(error);
       console.error('Gemini API Error:', msg);
 
-      if (msg.includes('API_KEY_INVALID') || msg.includes('API key not valid')) {
-        return res.status(401).json({ error: 'Gemini API key tidak valid.' });
+      if (msg.includes('API_KEY_INVALID') || msg.includes('API key not valid') || msg.includes('UNAUTHENTICATED')) {
+        return res.status(401).json({ error: 'Gemini API key tidak valid. Periksa file .env.' });
       }
       if (msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota')) {
         return res.status(429).json({ error: 'Kuota Gemini API habis. Coba lagi nanti.' });
