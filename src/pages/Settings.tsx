@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';

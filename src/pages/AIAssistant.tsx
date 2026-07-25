@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User as UserIcon } from 'lucide-react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
