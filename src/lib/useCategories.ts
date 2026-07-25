@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase';
 import { Category } from '../types';
+import { useAuth } from './AuthContext';
 
-// Static default categories — no Firestore query needed.
-// These IDs are stable and used as categoryId in transactions/budgets.
+// Static default categories — stable IDs used across transactions/budgets
 const DEFAULT_CATEGORIES: Category[] = [
   { id: 'cat_food',          name: 'Makan & Minum',   type: 'expense', userId: null, isGlobal: true, icon: 'utensils' },
   { id: 'cat_transport',     name: 'Transportasi',    type: 'expense', userId: null, isGlobal: true, icon: 'car' },
@@ -19,7 +21,29 @@ const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 export function useCategories() {
-  // Return stable reference — no re-renders from network calls
-  const categories = useMemo(() => DEFAULT_CATEGORIES, []);
-  return { categories, loading: false };
+  const { user } = useAuth();
+  const [customCategories, setCustomCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    const q = query(collection(db, 'categories'), where('userId', '==', user.uid));
+    const unsub = onSnapshot(q, snap => {
+      setCustomCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
+      setLoading(false);
+    }, err => {
+      console.error('useCategories error:', err);
+      setLoading(false);
+    });
+    return unsub;
+  }, [user]);
+
+  // Merge default + custom, stable reference via useMemo
+  const categories = useMemo(
+    () => [...DEFAULT_CATEGORIES, ...customCategories],
+    [customCategories]
+  );
+
+  return { categories, loading };
 }

@@ -3,9 +3,9 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
 import { useCategories } from '../lib/useCategories';
-import { Transaction } from '../types';
+import { Transaction, Budget } from '../types';
 import { TrendingUp, TrendingDown, AlertCircle, ArrowRight, WalletCards, CircleDollarSign, ReceiptText } from 'lucide-react';
-import { format, parseISO, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, parseISO, subMonths } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { cn } from '../lib/utils';
@@ -27,34 +27,36 @@ export function Dashboard() {
   const { user } = useAuth();
   const { categories } = useCategories();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
+  const currentMonth = format(new Date(), 'yyyy-MM');
 
   useEffect(() => {
     if (!user) return;
-    const q = query(
-      collection(db, 'transactions'),
-      where('userId', '==', user.uid)
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      // Sort client-side — no composite index needed
-      const data = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() } as Transaction))
+    const q = query(collection(db, 'transactions'), where('userId', '==', user.uid));
+    const unsub = onSnapshot(q, (snap) => {
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction))
         .sort((a, b) => b.date.localeCompare(a.date));
       setTransactions(data);
       setLoading(false);
-    }, (err) => {
-      console.error('Transactions error:', err);
-      setLoading(false);
-    });
-    return unsubscribe;
+    }, (err) => { console.error('Transactions error:', err); setLoading(false); });
+    return unsub;
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const bq = query(collection(db, 'budgets'), where('userId', '==', user.uid), where('month', '==', currentMonth));
+    return onSnapshot(bq, snap => {
+      setBudgets(snap.docs.map(d => ({ id: d.id, ...d.data() } as Budget)));
+    }, err => console.error('Budgets error:', err));
+  }, [user, currentMonth]);
 
   const stats = useMemo(() => {
     const now = new Date();
-    const currentMonth = format(now, 'yyyy-MM');
+    const cm = format(now, 'yyyy-MM');
     const prevMonth = format(subMonths(now, 1), 'yyyy-MM');
 
-    const thisMonthTxs = transactions.filter(t => t.date.startsWith(currentMonth));
+    const thisMonthTxs = transactions.filter(t => t.date.startsWith(cm));
     const prevMonthTxs = transactions.filter(t => t.date.startsWith(prevMonth));
 
     let income = 0, expense = 0, prevIncome = 0, prevExpense = 0;
@@ -72,38 +74,36 @@ export function Dashboard() {
       else prevExpense += t.amount;
     });
 
-    // Top expense category
-    let topCatId = '';
-    let maxExp = 0;
+    let topCatId = '', maxExp = 0;
     Object.entries(expenseByCategory).forEach(([id, amt]) => {
       if (amt > maxExp) { maxExp = amt; topCatId = id; }
     });
     const topCat = categories.find(c => c.id === topCatId);
 
-    // Pie chart data
     const chartData = Object.entries(expenseByCategory)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
+      .sort((a, b) => b[1] - a[1]).slice(0, 6)
       .map(([catId, amount]) => ({
         name: categories.find(c => c.id === catId)?.name || 'Lainnya',
         value: amount,
       }));
 
-    // Month-over-month delta
     const expenseDelta = prevExpense > 0 ? ((expense - prevExpense) / prevExpense) * 100 : 0;
 
+    // Budget progress for dashboard widget
+    const thisMonthExp = transactions.filter(t => t.date.startsWith(cm) && t.type === 'expense');
+    const budgetProgress = budgets.map(b => {
+      const spent = thisMonthExp.filter(t => t.categoryId === b.categoryId).reduce((s, t) => s + t.amount, 0);
+      const pct = b.amount > 0 ? Math.min((spent / b.amount) * 100, 100) : 0;
+      return { ...b, spent, pct, categoryName: categories.find(c => c.id === b.categoryId)?.name ?? 'Lainnya' };
+    }).sort((a, b) => b.pct - a.pct).slice(0, 3);
+
     return {
-      income,
-      expense,
-      balance: income - expense,
-      expenseByCategory,
-      topExpenseCategory: topCat?.name ?? 'N/A',
-      topExpenseAmount: maxExp,
-      chartData,
-      expenseDelta,
-      recent: transactions.slice(0, 6),
+      income, expense, balance: income - expense,
+      expenseByCategory, topExpenseCategory: topCat?.name ?? 'N/A',
+      topExpenseAmount: maxExp, chartData, expenseDelta,
+      recent: transactions.slice(0, 6), budgetProgress,
     };
-  }, [transactions, categories]);
+  }, [transactions, categories, budgets]);
 
   const formatRp = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
 
@@ -312,6 +312,38 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Budget Overview Widget */}
+      {!loading && stats.budgetProgress.length > 0 && (
+        <div className="bg-white rounded-2xl border border-[#e4e1da] p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-[#1d2421]">Status Anggaran Bulan Ini</h3>
+            <Link to="/app/budgets" className="text-xs font-semibold text-[#0f6e56] hover:text-[#075b46] flex items-center gap-1 transition-colors">
+              Kelola <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {stats.budgetProgress.map(bp => {
+              const barColor = bp.pct >= 100 ? 'bg-[#b11818]' : bp.pct >= 80 ? 'bg-[#c47205]' : 'bg-[#4c9300]';
+              const textColor = bp.pct >= 100 ? 'text-[#b11818]' : bp.pct >= 80 ? 'text-[#c47205]' : 'text-[#4c9300]';
+              return (
+                <div key={bp.id}>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-sm font-medium text-[#252b28]">{bp.categoryName}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-[#777670]">{formatRp(bp.spent)} / {formatRp(bp.amount)}</span>
+                      <span className={cn('text-xs font-bold w-10 text-right', textColor)}>{Math.round(bp.pct)}%</span>
+                    </div>
+                  </div>
+                  <div className="h-2 w-full bg-[#f0eee8] rounded-full overflow-hidden">
+                    <div className={cn('h-full rounded-full transition-all duration-500', barColor)} style={{ width: `${bp.pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
