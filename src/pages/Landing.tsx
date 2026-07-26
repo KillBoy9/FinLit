@@ -44,7 +44,7 @@ export function Landing() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0f6e56] opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0f6e56]" />
           </span>
-          Powered by AI (Gemini)
+          Insight keuangan personal berbasis AI
         </div>
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-[#1d2421] mb-6 leading-tight">
           Cerdas Kelola Uang, <br className="hidden md:block" />
