@@ -147,7 +147,16 @@ export function AIAssistant() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: text.trim(), context }),
+        body: JSON.stringify({
+          prompt: text.trim(),
+          context,
+          // Keep recent turns so follow-up questions stay connected to the
+          // previous financial discussion without sending an oversized prompt.
+          history: messages.slice(-6).map(message => ({
+            role: message.role === 'assistant' ? 'model' : 'user',
+            text: message.content,
+          })),
+        }),
       });
 
       const data = await res.json().catch(() => ({}));
