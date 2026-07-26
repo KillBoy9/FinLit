@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -35,6 +35,7 @@ function AlertBanner({ banner, onClose }: { banner: Banner; onClose: () => void 
 
 export function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [banner, setBanner] = useState<Banner | null>(null);
   // State untuk flow "login dulu baru linking"
@@ -45,8 +46,14 @@ export function Login() {
   const [linkingLoading, setLinkingLoading] = useState(false);
 
   const handleBack = () => {
-    if (window.history.length > 1) navigate(-1);
-    else navigate('/');
+    // Login normally returns to the landing page. A public page can explicitly
+    // provide a safe internal destination through navigation state.
+    const from = (location.state as { from?: unknown } | null)?.from;
+    if (from === '/register') {
+      navigate(from, { replace: true });
+      return;
+    }
+    navigate('/', { replace: true });
   };
 
   // Ensure profile exists in Firestore
@@ -265,7 +272,7 @@ export function Login() {
         )}
 
         <div className="text-center">
-          <Link to="/register" className="text-sm text-[#777670] hover:text-[#0f6e56] transition-colors">
+          <Link to="/register" replace className="text-sm text-[#777670] hover:text-[#0f6e56] transition-colors">
             Belum punya akun? <span className="text-[#0f6e56] font-bold">Daftar sekarang</span>
           </Link>
         </div>

@@ -9,6 +9,9 @@ import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { cn } from '../lib/utils';
 
+const sanitizeAmount = (value: string) => value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+const formatAmountInput = (value: string) => sanitizeAmount(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
 export function Budgets() {
   const { user } = useAuth();
   const { categories } = useCategories();
@@ -165,13 +168,13 @@ export function Budgets() {
             <div>
               <label className="block text-xs font-medium text-[#5f5e5a] mb-1.5">Limit Bulanan (Rp)</label>
               <input
-                type="number"
+                type="text"
                 required
-                min="1"
-                step="1"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="500000"
+                inputMode="numeric"
+                pattern="[0-9.]*"
+                value={formatAmountInput(amount)}
+                onChange={(e) => setAmount(sanitizeAmount(e.target.value))}
+                placeholder="500.000"
                 className="w-full rounded-xl border border-[#dedbd4] bg-[#f7f6f2] text-[#252b28] focus:outline-none focus:border-[#0f6e56] focus:ring-1 focus:ring-[#0f6e56]/20 text-sm p-2.5 placeholder-[#aaa8a2]"
               />
             </div>

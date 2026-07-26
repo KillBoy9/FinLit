@@ -3,9 +3,10 @@ import React from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ReceiptText, PieChart, Bot, Settings,
-  LogOut, Wallet, Bell, Search, ChevronRight, BarChart2, X, AlertTriangle
+  LogOut, Wallet, Bell, Search, ChevronRight, BarChart2, X, AlertTriangle,
+  Bookmark, Trash2
 } from 'lucide-react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, doc, query, setDoc, where, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
 import { useCategories } from '../lib/useCategories';
@@ -29,6 +30,11 @@ interface Notification {
   type: 'warning' | 'danger';
 }
 
+interface NotificationState extends Notification {
+  userId: string;
+  status: 'saved' | 'dismissed';
+}
+
 export function DashboardLayout() {
   const location = useLocation();
   const { user } = useAuth();
@@ -37,8 +43,11 @@ export function DashboardLayout() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [generatedNotifications, setGeneratedNotifications] = useState<Notification[]>([]);
+  const [notificationStates, setNotificationStates] = useState<Record<string, NotificationState>>({});
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationTab, setNotificationTab] = useState<'active' | 'saved'>('active');
+  const [notificationFeedback, setNotificationFeedback] = useState('');
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -61,6 +70,31 @@ export function DashboardLayout() {
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
   const initial = displayName.charAt(0).toUpperCase();
+  const notifications = generatedNotifications.filter(notification => !notificationStates[notification.id]);
+  const savedNotifications = Object.keys(notificationStates)
+    .map(id => notificationStates[id])
+    .filter(notification => notification.status === 'saved');
+  const visibleNotifications = notificationTab === 'active' ? notifications : savedNotifications;
+
+  // ── Saved/dismissed notification state ───────────────────────
+  useEffect(() => {
+    if (!user) {
+      setNotificationStates({});
+      return;
+    }
+
+    return onSnapshot(
+      doc(db, 'profiles', user.uid),
+      snapshot => {
+        const states = snapshot.data()?.notificationStates;
+        setNotificationStates(states && typeof states === 'object' ? states as Record<string, NotificationState> : {});
+      },
+      error => {
+        console.error('Notification states error:', error);
+        setNotificationFeedback('Status notifikasi gagal dimuat. Coba refresh halaman.');
+      }
+    );
+  }, [user]);
 
   // ── Budget notifications ────────────────────────────────────
   useEffect(() => {
@@ -86,13 +120,36 @@ export function DashboardLayout() {
           notifs.push({ id: b.id + '_warn', title: `Budget ${catName} Hampir Habis`, message: `Sudah terpakai ${Math.round(pct)}% dari Rp ${b.amount.toLocaleString('id-ID')}`, type: 'warning' });
         }
       });
-      setNotifications(notifs);
+      setGeneratedNotifications(notifs);
     };
 
     const unsubB = onSnapshot(bq, snap => { budgets = snap.docs.map(d => ({ id: d.id, ...d.data() } as Budget)); compute(); });
     const unsubT = onSnapshot(tq, snap => { transactions = snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)); compute(); });
     return () => { unsubB(); unsubT(); };
   }, [user, categories]);
+
+  const updateNotificationStatus = async (notification: Notification, status: NotificationState['status']) => {
+    if (!user) return;
+    const nextStates = {
+      ...notificationStates,
+      [notification.id]: {
+        ...notification,
+        userId: user.uid,
+        status,
+      },
+    };
+    setNotificationStates(nextStates);
+    setNotificationFeedback(status === 'saved' ? 'Notifikasi disimpan.' : 'Notifikasi dihapus.');
+    try {
+      await setDoc(doc(db, 'profiles', user.uid), {
+        notificationStates: nextStates,
+      }, { merge: true });
+    } catch (error) {
+      console.error('Unable to update notification:', error);
+      setNotificationStates(notificationStates);
+      setNotificationFeedback('Gagal menyimpan perubahan. Coba lagi.');
+    }
+  };
 
   // Close notification panel on outside click
   useEffect(() => {
@@ -207,7 +264,10 @@ export function DashboardLayout() {
             {/* Notification bell */}
             <div className="relative" ref={notifRef}>
               <button
-                onClick={() => setShowNotifications(!showNotifications)}
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  setNotificationTab('active');
+                }}
                 className="relative w-9 h-9 rounded-xl border border-[#e4e1da] bg-white hover:bg-[#f4f2ed] flex items-center justify-center transition-colors">
                 <Bell className="w-4 h-4 text-[#5f5e5a]" />
                 {notifications.length > 0 && (
@@ -221,19 +281,50 @@ export function DashboardLayout() {
                 <div className="absolute right-0 top-11 w-80 bg-white border border-[#e4e1da] rounded-2xl shadow-xl z-50 overflow-hidden">
                   <div className="px-4 py-3 border-b border-[#e4e1da] flex items-center justify-between">
                     <span className="text-sm font-bold text-[#1d2421]">Notifikasi</span>
-                    <span className="text-xs text-[#777670]">{notifications.length} notif</span>
+                    <button onClick={() => setShowNotifications(false)} className="text-[#96938c] hover:text-[#1d2421]" aria-label="Tutup notifikasi">
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                  {notifications.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-sm text-[#777670]">Tidak ada notifikasi</div>
+                  <div className="flex gap-1 px-3 pt-3">
+                    <button onClick={() => setNotificationTab('active')}
+                      className={cn('flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors', notificationTab === 'active' ? 'bg-[#dff3ed] text-[#0f6e56]' : 'text-[#777670] hover:bg-[#f4f2ed]')}>
+                      Aktif ({notifications.length})
+                    </button>
+                    <button onClick={() => setNotificationTab('saved')}
+                      className={cn('flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors', notificationTab === 'saved' ? 'bg-[#dff3ed] text-[#0f6e56]' : 'text-[#777670] hover:bg-[#f4f2ed]')}>
+                      Tersimpan ({savedNotifications.length})
+                    </button>
+                  </div>
+                  {notificationFeedback && (
+                    <p className="mx-3 mt-2 rounded-lg bg-[#e2f4ef] px-2.5 py-2 text-[11px] font-medium text-[#0f6e56]">
+                      {notificationFeedback}
+                    </p>
+                  )}
+                  {visibleNotifications.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-sm text-[#777670]">
+                      {notificationTab === 'active' ? 'Tidak ada notifikasi aktif' : 'Belum ada notifikasi tersimpan'}
+                    </div>
                   ) : (
                     <div className="max-h-72 overflow-y-auto custom-scrollbar">
-                      {notifications.map(n => (
+                      {visibleNotifications.map(n => (
                         <div key={n.id} className={cn('px-4 py-3 border-b border-[#f0eee8] last:border-0 flex gap-3',
                           n.type === 'danger' ? 'bg-[#fff8f7]' : 'bg-[#fffdf5]')}>
                           <AlertTriangle className={cn('w-4 h-4 mt-0.5 flex-shrink-0', n.type === 'danger' ? 'text-[#b11818]' : 'text-[#c47205]')} />
-                          <div>
+                          <div className="min-w-0 flex-1">
                             <p className="text-xs font-semibold text-[#1d2421]">{n.title}</p>
                             <p className="text-xs text-[#777670] mt-0.5">{n.message}</p>
+                            <div className="flex gap-2 mt-2">
+                              {notificationTab === 'active' && (
+                                <button onClick={() => updateNotificationStatus(n, 'saved')}
+                                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0f6e56] hover:text-[#075b46]">
+                                  <Bookmark className="w-3 h-3" /> Simpan
+                                </button>
+                              )}
+                              <button onClick={() => updateNotificationStatus(n, 'dismissed')}
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#954c41] hover:text-[#7c3e35]">
+                                <Trash2 className="w-3 h-3" /> Hapus
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -246,8 +337,10 @@ export function DashboardLayout() {
             {/* Avatar */}
             <button onClick={() => navigate('/app/settings')}
               className="flex items-center gap-2 px-2 py-1.5 rounded-xl border border-[#e4e1da] bg-white hover:bg-[#f4f2ed] transition-colors">
-              <div className="w-7 h-7 rounded-full bg-[#0f6e56] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                {initial}
+              <div className="w-7 h-7 rounded-full bg-[#0f6e56] flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
+                {user?.photoURL
+                  ? <img src={user.photoURL} alt="avatar" className="w-full h-full object-cover" />
+                  : initial}
               </div>
               <span className="hidden sm:block text-sm font-medium text-[#252b28] max-w-[120px] truncate">{displayName}</span>
               <ChevronRight className="hidden sm:block w-3.5 h-3.5 text-[#96938c]" />

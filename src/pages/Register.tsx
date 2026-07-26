@@ -45,7 +45,7 @@ function EmailVerificationSent({ email, onBack }: { email: string; onBack: () =>
         Klik link di email tersebut untuk mengaktifkan akun, lalu masuk.
       </p>
       <p className="text-xs text-[#92908a]">Tidak ada email? Cek folder spam atau coba daftar ulang.</p>
-      <Link to="/login"
+      <Link to="/login" state={{ from: '/register' }} replace
         className="block w-full py-3 rounded-xl text-sm font-bold text-white bg-[#0f6e56] hover:bg-[#075b46] transition-all text-center">
         Pergi ke halaman Login
       </Link>
@@ -242,7 +242,7 @@ export function Register() {
 
         {!verificationSent && (
           <div className="text-center">
-            <Link to="/login" className="text-sm text-[#777670] hover:text-[#0f6e56] transition-colors">
+            <Link to="/login" state={{ from: '/register' }} replace className="text-sm text-[#777670] hover:text-[#0f6e56] transition-colors">
               Sudah punya akun? <span className="text-[#0f6e56] font-bold">Masuk</span>
             </Link>
           </div>
