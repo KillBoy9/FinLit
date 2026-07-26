@@ -1,9 +1,21 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Wallet, TrendingUp, Bot, Target, Shield, Zap } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
+import { auth } from '../lib/firebase';
 
 export function Landing() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Starting from the public landing page always opens a fresh login flow.
+  // User data remains in Firestore; only the local Firebase session is cleared.
+  const startFreshLogin = async () => {
+    try {
+      if (user) await auth.signOut();
+    } finally {
+      navigate('/login');
+    }
+  };
 
   return (
     <div className="w-full min-h-screen bg-[#f8f7f4] text-[#1d2421] flex flex-col font-sans relative overflow-x-hidden scroll-page">
@@ -19,15 +31,9 @@ export function Landing() {
           <div><span className="text-xl font-bold tracking-tight text-[#0f6e56]">FinGuide AI</span><p className="text-[9px] font-bold tracking-[0.16em] text-[#5f5e5a]">WEALTH MANAGEMENT</p></div>
         </div>
         <div>
-          {user ? (
-            <Link to="/app" className="px-5 py-2.5 bg-[#0f6e56] hover:bg-[#075b46] rounded-xl text-sm font-bold text-white transition-colors shadow-sm">
-              Go to Dashboard
-            </Link>
-          ) : (
-            <Link to="/login" className="px-5 py-2.5 bg-[#0f6e56] hover:bg-[#075b46] rounded-xl text-sm font-bold text-white shadow-sm transition-colors">
-              Masuk / Daftar
-            </Link>
-          )}
+          <button onClick={startFreshLogin} className="px-5 py-2.5 bg-[#0f6e56] hover:bg-[#075b46] rounded-xl text-sm font-bold text-white shadow-sm transition-colors">
+            Masuk / Daftar
+          </button>
         </div>
       </nav>
 
@@ -48,9 +54,9 @@ export function Landing() {
           FinLit bukan sekadar aplikasi pencatat keuangan. Ini adalah asisten finansial pribadimu yang memberikan insight cerdas berdasarkan pengeluaran aslimu.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
-          <Link to={user ? "/app" : "/login"} className="px-8 py-4 bg-[#0f6e56] hover:bg-[#075b46] rounded-xl text-base font-bold text-white shadow-sm transition-colors flex items-center justify-center gap-2">
+          <button onClick={startFreshLogin} className="px-8 py-4 bg-[#0f6e56] hover:bg-[#075b46] rounded-xl text-base font-bold text-white shadow-sm transition-colors flex items-center justify-center gap-2">
             Mulai Sekarang <Zap className="w-4 h-4" />
-          </Link>
+          </button>
           <a href="#tentang" className="px-8 py-4 bg-white hover:bg-[#f0eee8] border border-[#d9d6cf] rounded-xl text-base font-bold text-[#0f6e56] transition-colors">
             Pelajari Lebih Lanjut
           </a>
@@ -148,9 +154,9 @@ export function Landing() {
             <p className="text-lg text-[#d7efe7] max-w-3xl mx-auto leading-relaxed relative z-10 mb-10">
               "Membangun generasi muda Indonesia yang melek finansial, bebas dari masalah keuangan impulsif, dan mampu merencanakan masa depan dengan tenang dan percaya diri."
             </p>
-            <Link to={user ? "/app" : "/login"} className="inline-flex px-8 py-4 bg-white text-[#0f6e56] rounded-xl text-base font-bold shadow-xl hover:bg-[#f4f2ed] transition-colors relative z-10">
+            <button onClick={startFreshLogin} className="inline-flex px-8 py-4 bg-white text-[#0f6e56] rounded-xl text-base font-bold shadow-xl hover:bg-[#f4f2ed] transition-colors relative z-10">
               Mulai Perjalanan Finansialmu
-            </Link>
+            </button>
           </section>
 
         </div>
