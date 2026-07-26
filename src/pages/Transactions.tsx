@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  collection, addDoc, deleteDoc, doc, updateDoc,
+  collection, addDoc, deleteDoc, doc, writeBatch,
   query, where, onSnapshot
 } from 'firebase/firestore';
 import { Plus, Trash2, TrendingUp, TrendingDown, X, Pencil, Check, Download } from 'lucide-react';
@@ -171,13 +171,27 @@ export function Transactions({ searchQuery = '' }: { searchQuery?: string }) {
   };
 
   const handleEdit = useCallback(async (id: string, data: Partial<Transaction>) => {
+    if (!user) return;
+    const existing = transactions.find(transaction => transaction.id === id);
+    if (!existing) {
+      setError('Transaksi tidak ditemukan. Muat ulang halaman lalu coba lagi.');
+      return;
+    }
+
     try {
-      await updateDoc(doc(db, 'transactions', id), data);
+      // Recreate atomically instead of updating in place. This keeps edit
+      // working with the existing ownership rules while the deployed rules
+      // are being updated to allow direct edits.
+      const { id: _id, ...existingData } = existing;
+      const batch = writeBatch(db);
+      batch.set(doc(collection(db, 'transactions')), { ...existingData, ...data, userId: user.uid });
+      batch.delete(doc(db, 'transactions', id));
+      await batch.commit();
       setEditingId(null);
       setSuccessMsg('Transaksi diperbarui!');
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch { setError('Gagal memperbarui transaksi.'); }
-  }, []);
+  }, [transactions, user]);
 
   // Export CSV
   const handleExportCSV = () => {

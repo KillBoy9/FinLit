@@ -16,6 +16,21 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
   const isDev = process.env.NODE_ENV !== 'production';
+  const chatAttempts = new Map<string, { count: number; resetAt: number }>();
+  const CHAT_WINDOW_MS = 10 * 60 * 1000;
+  const CHAT_MAX_REQUESTS = 20;
+
+  const canUseChat = (key: string) => {
+    const now = Date.now();
+    const attempt = chatAttempts.get(key);
+    if (!attempt || attempt.resetAt <= now) {
+      chatAttempts.set(key, { count: 1, resetAt: now + CHAT_WINDOW_MS });
+      return true;
+    }
+    if (attempt.count >= CHAT_MAX_REQUESTS) return false;
+    attempt.count += 1;
+    return true;
+  };
 
   // ── Security headers ────────────────────────────────────
   app.use(helmet({
@@ -53,6 +68,12 @@ async function startServer() {
 
   // ── AI Chat endpoint ────────────────────────────────────
   app.post('/api/chat', async (req, res) => {
+    const clientKey = req.ip || req.socket.remoteAddress || 'unknown';
+    if (!canUseChat(clientKey)) {
+      res.setHeader('Retry-After', String(CHAT_WINDOW_MS / 1000));
+      return res.status(429).json({ error: 'Terlalu banyak permintaan AI. Coba lagi dalam beberapa menit.' });
+    }
+
     const { prompt, context, history } = req.body ?? {};
 
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {

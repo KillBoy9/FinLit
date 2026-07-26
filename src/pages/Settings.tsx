@@ -122,15 +122,11 @@ export function Settings() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (!file.type.startsWith('image/')) {
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedImageTypes.includes(file.type)) {
       showMsg('File harus berupa gambar (JPG, PNG, WebP).', 'error');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      showMsg('Ukuran foto maksimal 5MB.', 'error');
-      return;
-    }
-
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
     const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
@@ -166,8 +162,9 @@ export function Settings() {
           const formData = new FormData();
           formData.append('file', blob, 'avatar.jpg');
           formData.append('upload_preset', uploadPreset);
-          formData.append('folder', 'finlit-avatars');
-          formData.append('public_id', `avatar_${user.uid}`);
+          // Folder and public ID are managed by the unsigned Cloudinary preset.
+          // Letting Cloudinary generate a new ID prevents a second profile-photo
+          // upload from being rejected when overwrite is disabled in the preset.
 
           try {
             setUploadProgress(30);

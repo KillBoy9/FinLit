@@ -25,7 +25,17 @@ service cloud.firestore {
         && request.resource.data.type in ['income', 'expense']
         && request.resource.data.date is string
         && request.resource.data.date.size() == 10;  // YYYY-MM-DD
-      allow update: if false; // No edits — delete and re-create
+      // The UI supports inline edits. Preserve ownership and validate the
+      // critical fields on every update so another user's transaction cannot
+      // be changed or reassigned.
+      allow update: if isAuthed()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0
+        && request.resource.data.type in ['income', 'expense']
+        && request.resource.data.date is string
+        && request.resource.data.date.size() == 10;
     }
 
     // ── Budgets: strict ownership ─────────────────────────────────

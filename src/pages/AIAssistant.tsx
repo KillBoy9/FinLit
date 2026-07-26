@@ -40,7 +40,7 @@ export function AIAssistant() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [analysisTransactions, setAnalysisTransactions] = useState<Transaction[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -130,7 +130,7 @@ export function AIAssistant() {
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || loading) return;
-    setApiError(false);
+    setApiError(null);
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -150,8 +150,8 @@ export function AIAssistant() {
         body: JSON.stringify({ prompt: text.trim(), context }),
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Permintaan gagal (${res.status}).`);
 
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
@@ -161,11 +161,12 @@ export function AIAssistant() {
       }]);
     } catch (err) {
       console.error(err);
-      setApiError(true);
+      const message = err instanceof Error ? err.message : 'Gagal terhubung ke AI. Coba lagi.';
+      setApiError(message);
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Maaf, aku gagal memproses permintaanmu. Pastikan Gemini API key sudah diisi di file .env, kemudian coba lagi.',
+        content: `Maaf, aku belum bisa memproses permintaanmu. ${message}`,
         timestamp: new Date(),
       }]);
     } finally {
@@ -186,7 +187,7 @@ export function AIAssistant() {
       content: 'Chat dibersihkan. Ada yang ingin kamu tanyakan?',
       timestamp: new Date(),
     }]);
-    setApiError(false);
+    setApiError(null);
   };
 
   return (
@@ -197,6 +198,7 @@ export function AIAssistant() {
           <p className="text-xs font-bold tracking-[0.16em] text-[#0f6e56] uppercase mb-1">AI powered insight</p>
           <h2 className="text-2xl font-bold tracking-tight text-[#1d2421]">Analisis Pengeluaran</h2>
           <p className="text-[#777670] text-sm mt-1">Laporan keuangan bulan {format(new Date(), 'MMMM yyyy', { locale: idLocale })}</p>
+          <p className="text-[#92908a] text-xs mt-1">Insight AI bersifat edukatif, bukan nasihat keuangan profesional.</p>
         </div>
         {messages.length > 1 && (
           <button
@@ -325,7 +327,7 @@ export function AIAssistant() {
         {/* API Error banner */}
         {apiError && (
           <div className="mx-4 mb-2 px-3 py-2 rounded-xl bg-[#f5e6e2] border border-[#d9aaa2] text-[#954c41] text-xs">
-            ⚠️ Gagal terhubung ke Gemini AI. Pastikan <code className="bg-[#efcfc8] px-1 rounded">GEMINI_API_KEY</code> sudah diisi di file <code className="bg-[#efcfc8] px-1 rounded">.env</code>.
+            ⚠️ {apiError}
           </div>
         )}
 
